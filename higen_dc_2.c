@@ -26,6 +26,7 @@ static unsigned int cycle_ns = SM_FRAME_PERIOD_NS;
 
 /* EtherCAT Configuration pointer */
 static ec_master_t *master = NULL;
+static ec_master_t *master1 = NULL;
 
 /* FIXME:  Declares per slave device. */
 static ec_slave_config_t *slave0 = NULL;
@@ -619,6 +620,7 @@ int main(int argc,char **argv)
 
 	/* Request EtherCAT master */
 	master = ecrt_request_master(0);
+	//master1 = ecrt_request_master(1);
 	if (!master) return -1;
 
 	/* Create domains for PDO exchange. */

@@ -1,6 +1,7 @@
 # control_applications
 
-This repository includes motor control application written in C using IgH EtherCAT Master Stack. Since there are two synchronized methods (Frame event, Distributed Clock event) in EtherCAT, We try to support both.
+This repository includes motor control application written in C using IgH EtherCAT Master Stack. 
+Since there are two synchronized methods (Frame event, Distributed Clock event) in EtherCAT, we try to support both.
 
 Support commercial servo drives:
 
