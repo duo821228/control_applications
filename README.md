@@ -4,14 +4,14 @@ This repository includes motor control application written in C using IgH EtherC
 
 Support commercial servo drives:
 
-Sanyo (SANMOTION R ADVANCED MODEL, RS2A01A0KA4 (Drive) / R2AA06020FXH00 (Motor))
+1.Sanyo (SANMOTION R ADVANCED MODEL, RS2A01A0KA4 (Drive) / R2AA06020FXH00 (Motor))
  - Should be operate with DC if you don't have a jitter less than 5 us at master.
  - PDO overlapping enabled.
-Panasonic (MINAS A5 Series, MBDHT2510BD1 (Drive))
+2.Panasonic (MINAS A5 Series, MBDHT2510BD1 (Drive))
  - Mode of Operation (0x6060) initialization needed.
-Yaskawa
+3.Yaskawa
  - Mode of Operation (0x6060) initialization needed.
  - Does not handle LRW command, create two domains for RxPDO, TxPDO.
-Higen (EDA 7002 (Drive))
-Texas Instruments AM3359 ICE
+4.Higen (EDA 7002 (Drive))
+5.Texas Instruments AM3359 ICE
  - PDO overlapping enabled.
