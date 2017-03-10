@@ -7,7 +7,8 @@ Support commercial servo drives:
 
 1.Sanyo (SANMOTION R ADVANCED MODEL, RS2A01A0KA4 (Drive) / R2AA06020FXH00 (Motor))
  - Should be operate with DC (if you don't have a jitter less than 5 us at master).
- - Should be enabled PDO overlapping feature.
+ - 0x6060 (Mode of operation) should not be mapped to EtherCAT domain.
+ - Only support CSV operation mode; Supporting for CSP mode is not available..
 
 2.Panasonic (MINAS A5 Series, MBDHT2510BD1 (Drive))
  - Drive operation mode (Mode of Operation (0x6060)) initialization is needed.
@@ -20,3 +21,4 @@ Support commercial servo drives:
 
 5.Texas Instruments AM3359 ICE
  - Drive operation mode (Mode of Operation (0x6060)) initialization is needed.
+ - PDO overlapping feature should be applied.

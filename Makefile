@@ -11,9 +11,10 @@ YASKAWA_DC = yaskawa_dc
 HIGEN_DC = higen_dc_2
 PANASONIC = panasonic
 SANYO = sanyo
-HYBRID = hybid
+HYBRID = hybrid
+3HYBRID = 3hybrid
 
-all: $(YASKAWA_FRAME) $(YASKAWA_DC) $(HIGEN_DC) $(SANYO) $(PANASONIC) $(HYBRID)
+all: $(YASKAWA_FRAME) $(YASKAWA_DC) $(HIGEN_DC) $(SANYO) $(PANASONIC) $(HYBRID) $(3HYBRID)
 
 $(YASKAWA_FRAME): yaskawa.c
 	$(CC) $(CFLAGS) -static -o $@ $^ $(ECAT_LIBS) $(XENO_LIBS)
@@ -32,6 +33,10 @@ $(SANYO): sanyo.c
 
 $(HYBRID): yas_pana_2.c
 	$(CC) $(CFLAGS) -static -o $@ $^ $(ECAT_LIBS) $(XENO_LIBS)
+
+$(3HYBRID): yas_pana_san_3.c
+	$(CC) $(CFLAGS) -static -o $@ $^ $(ECAT_LIBS) $(XENO_LIBS)
+
 clean:
-	rm $(YASKAWA_FRAME) $(YASKAWA_DC) $(HIGEN_DC) $(SANYO) $(PANASONIC) $(HYBRID)
+	rm $(YASKAWA_FRAME) $(YASKAWA_DC) $(HIGEN_DC) $(SANYO) $(PANASONIC) $(HYBRID) $(3HYBRID)
 

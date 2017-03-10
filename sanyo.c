@@ -18,9 +18,12 @@
 
 #include "ecrt.h"
 
-#define SM_FRAME_PERIOD_NS      4000000 // 4ms.
+#define SM_FRAME_PERIOD_NS      4000000 // 2ms.
 #define SAN_ALIAS				0,0 // FIXME: This macro should be declared per slave.
 #define SANYO	0x000001b9, 0x00000002 // VendorId, ProductID
+
+/* Sanyo drive operation mode in this example: CSV */
+/* We will expand operation mode to CSP */
 
 /* EtherCAT Configuration pointer */
 static ec_master_t *master = NULL;
@@ -65,7 +68,6 @@ ec_pdo_entry_info_t slave_0_pdo_entries[] = {
     {0x6071, 0x00, 16}, /* Target torque */
     {0x60b8, 0x00, 16}, /* Touch probe function */
     {0x60fe, 0x01, 32}, /* Digital outputs */
-    {0x6060, 0x00, 8}, /* Modes of operation */
     {0x6041, 0x00, 16}, /* Status word */
     {0x2100, 0x00, 16}, /* Status word 1 */
     {0x6064, 0x00, 32}, /* Position actual value */
@@ -81,8 +83,8 @@ ec_pdo_entry_info_t slave_0_pdo_entries[] = {
 };
 
 ec_pdo_info_t slave_0_pdos[] = {
-    {0x1700, 10, slave_0_pdo_entries + 0}, /* Outputs */
-    {0x1b00, 12, slave_0_pdo_entries + 10}, /* Inputs */
+    {0x1700, 9, slave_0_pdo_entries + 0}, /* Outputs */
+    {0x1b00, 12, slave_0_pdo_entries + 9}, /* Inputs */
 };
 
 ec_sync_info_t slave_0_syncs[] = {
@@ -93,17 +95,16 @@ ec_sync_info_t slave_0_syncs[] = {
     {0xff}
 };
 
-/* Domains, yaskawa drive requires separated domain. */
 static ec_domain_t *domain1 = NULL;
 uint8_t *domain1_pd = NULL;
 
-/* FIXME: Insert pdos after 1st slave code,
-   if you want to add more slave devices.*/
+/* FIXME: If you want to operate motor drive properly,
+   You have to exclude mode of operation (0x6060) .*/
 const static ec_pdo_entry_reg_t domain1_regs[] = {
     {SAN_ALIAS, SANYO, 0x6041, 0, &slave0_6041_00},
     {SAN_ALIAS, SANYO, 0x6064, 0, &slave0_6064_00},
-    {SAN_ALIAS, SANYO, 0x606c, 0, &slave0_606c_00},
-    {SAN_ALIAS, SANYO, 0x6077, 0, &slave0_6077_00},
+    //{SAN_ALIAS, SANYO, 0x606c, 0, &slave0_606c_00},
+    //{SAN_ALIAS, SANYO, 0x6077, 0, &slave0_6077_00},
     {SAN_ALIAS, SANYO, 0x6061, 0, &slave0_6061_00},
     {SAN_ALIAS, SANYO, 0x6040, 0, &slave0_6040_00},
     {SAN_ALIAS, SANYO, 0x607a, 0, &slave0_607a_00},
@@ -114,7 +115,6 @@ const static ec_pdo_entry_reg_t domain1_regs[] = {
     {SAN_ALIAS, SANYO, 0x6071, 0, &slave0_6071_00},
     {SAN_ALIAS, SANYO, 0x60b8, 0, &slave0_60b8_00},
     {SAN_ALIAS, SANYO, 0x60fe, 1, &slave0_60fe_01},
-    {SAN_ALIAS, SANYO, 0x6060, 0, &slave0_6060_00},
     {}
 };
 
@@ -199,33 +199,14 @@ void my_task_proc(void *arg)
 		/* Not mandatory */
 		check_domain_state (domain1);
 
-		/* FIXME: Add following codes per each slave device..*/
-		/* CiA 402 State machine according to the drive manual. */
-		if (statusWord0 == 80 || statusWord0 == 1104) controlWord0 = 6; //fprintf(stderr, "SwitchOnDisabled!!\n");
-		else if (statusWord0 == 49 || statusWord0 == 1073) controlWord0 = 7; //fprintf(stderr, "Rdy2SwitchOn!!\n");
-		else if (statusWord0 == 51 || statusWord0 == 1075) controlWord0 = 15; //fprintf(stderr, "SwitchedOn!!\n");
-		//else if (statusWord == 55 || statusWord == 1079) ;
-		else if (statusWord0 == 5175) controlWord0 = 15; //fprintf(stderr, "Operation Enabled!!\n");
-		else controlWord0 = 128; // Other initial state.
-
-
-		#if 0
-		if ((statusWord0 & 0x4f) == 0x40)	controlWord0 = 0x06; //fprintf(stderr, "SwitchOnDisabled!!\n");
-		else if ((statusWord0 & 0x6f) == 0x21) controlWord0 = 0x07; //fprintf(stderr, "Rdy2SwitchOn!!\n");
-		else if ((statusWord0 & 0x027f) == 0x233) controlWord0 = 0x0f; //fprintf(stderr, "SwitchedOn!!\n");
-		else if ((statusWord0 & 0x027f) == 0x237) controlWord0 = 0x1f; //fprintf(stderr, "Operation Enabled!!\n");
-		else controlWord0 = 0x80; //fprintf(stderr, "Unknown!!!!\n");
-		#endif
-		/* FIXME: Add macro when you use more slave devices.*/
-		/* Write RxPDO to the domain */
-
-		targetPosition0 = actualPosition0 + 10000; /* Set target position */
-
-		EC_WRITE_U16(domain1_pd + slave0_6040_00, 0x001F);
-    	EC_WRITE_S32(domain1_pd + slave0_607a_00, targetPosition0);
-    	EC_WRITE_S32(domain1_pd + slave0_60ff_00, 0x000FFFFF);
-    	EC_WRITE_S8(domain1_pd + slave0_6060_00, 0x08); // CSP
-
+		if (statusWord0 == 0x1437) continue; //fprintf(stderr, "Operation enabled!\n");
+		else if (statusWord0 == 0x0450) controlWord0 = 0x06;//fprintf(stderr, "Switch on Disabled!\n");
+		else if (statusWord0 == 0x0431) controlWord0 = 0x07;//fprintf(stderr, "Ready to Switch on !\n");
+		else if (statusWord0 == 0x0433) controlWord0 = 0x1f;//fprintf(stderr, "Ready to Switch on !\n");
+	
+		EC_WRITE_U16(domain1_pd+slave0_6040_00, controlWord0);
+		EC_WRITE_S32(domain1_pd + slave0_60ff_00, 0x000FFFFF); // Target velocity
+		EC_WRITE_S8(domain1_pd + slave0_6060_00, 0x09); // CSV mode
 
 		/* Queueing RxPDO to datagram (Domain->Master module). */
 		ecrt_domain_queue(domain1);
@@ -256,7 +237,7 @@ int main(int argc,char **argv)
 	/* Create domain for PDO exchange. */
 	domain1 = ecrt_master_create_domain(master);
 	if (!domain1) return -1;
-	
+
 	/* PDO configuration for slave device */ 
 	/* FIXME: Use following codes per slave device */
 	if (!(slave0 = ecrt_master_slave_config(master, SAN_ALIAS, SANYO))) {
@@ -269,11 +250,6 @@ int main(int argc,char **argv)
 		return -1;
 	}
 
-	/* Mandatory */
-    //ecrt_slave_config_overlapping_pdos (slave0, 1);
-
-	// FIXME: Add here when you use more slave devices. 
-
 	/* Setup EtherCAT Master transmit interval(us), 
 	   usually same as the period of control task. */
 	ecrt_master_set_send_interval(master, cycle_ns / 1000);
@@ -283,7 +259,15 @@ int main(int argc,char **argv)
 		fprintf(stderr, "PDO entry registration failed!\n");
 		return -1;
 	}
-
+	/* Drive operation mode control-CSV */
+	{
+		uint8_t value[1];
+		EC_WRITE_S8((uint8_t *)value, 0x09);
+		if (ecrt_master_sdo_download(master, 0, 0x6060, 0x00, (uint8_t *)value, 1, &abort_code)) {
+		    fprintf(stderr, "EtherCAT Failed to initialize slave SanyoDenki RS2 EtherCAT at alias 0 and position 1. Error: %d\n", abort_code);
+		    return -1;
+		}
+	}
 	/* Activating master stack */
 	if (ecrt_master_activate(master))
 		return -1;
